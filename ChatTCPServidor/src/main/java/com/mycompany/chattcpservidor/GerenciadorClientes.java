@@ -51,5 +51,6 @@ public class GerenciadorClientes {
             alvo.enviarMensagem(msg);
             return true;
         }
+        return false; // Usuário destino não encontrado ou desconectado
     }
 }
