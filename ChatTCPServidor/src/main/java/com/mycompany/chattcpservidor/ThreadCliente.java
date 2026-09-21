@@ -47,6 +47,14 @@ public class ThreadCliente implements Runnable {
     }
     
     private void processarMensagem(Mensagem msg) {
+        // Trava de Segurança: impede o envio de mensagens sem login aprovado
+        if (!"LOGIN".equals(msg.getTipo()) && this.apelido == null) {
+            Mensagem erro = new Mensagem("ERRO", "SERVIDOR", "DESCONHECIDO",
+                    "Você precisa realizar o login primeiro.", null);
+            enviarMensagem(erro);
+            return;
+        }
+        
         switch (msg.getTipo()) {
             case "LOGIN":
                 String novoApelido = msg.getRemetente();

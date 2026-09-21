@@ -152,7 +152,7 @@ public class TelaChat extends javax.swing.JFrame {
             entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
             
             // 2. Inicia a thread de escuta
-            conectado = true;
+            // conectado = true;
             iniciarThreadEscuta();
             
             // 3. Envia o pacote de LOGIN
@@ -238,7 +238,8 @@ public class TelaChat extends javax.swing.JFrame {
         new Thread(() -> {
             try {
                 String linha;
-                while (conectado && (linha = entrada.readLine()) != null) {
+                // Verifica se o socket está ativo em vez da flag 'conectado'
+                while (socket != null && !socket.isClosed() && (linha = entrada.readLine()) != null) {
                     Mensagem msg = Mensagem.fromLinha(linha);
                     if (msg != null) {
                         processarMensagemRecebida(msg);
@@ -261,7 +262,7 @@ public class TelaChat extends javax.swing.JFrame {
         switch (msg.getTipo()) {
             case "LOGIN":
                 if ("OK".equals(msg.getConteudo())) {
-                    conectado = true;
+                    conectado = true; // Ativa a conexão apenas após aprovação do servidor
                     taHistorico.append("[SISTEMA] Conectado com sucesso ao Chat!\n");
                     btnConectar.setEnabled(false);
                     btnDesconectar.setEnabled(true);
