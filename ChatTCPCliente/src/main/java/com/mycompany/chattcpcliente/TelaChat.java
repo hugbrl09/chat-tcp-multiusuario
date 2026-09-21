@@ -1,6 +1,11 @@
 package com.mycompany.chattcpcliente;
 
 public class TelaChat extends javax.swing.JFrame {
+    private java.net.Socket socket;
+    private java.io.PrintWriter saida;
+    private java.io.BufferedReader entrada;
+    private boolean conectado = false;
+    private String meuApelido;
     
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(TelaChat.class.getName());
 
@@ -20,22 +25,272 @@ public class TelaChat extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jLabel1 = new javax.swing.JLabel();
+        tfApelido = new javax.swing.JTextField();
+        btnConectar = new javax.swing.JButton();
+        btnDesconectar = new javax.swing.JButton();
+        jLabel2 = new javax.swing.JLabel();
+        cbDestino = new javax.swing.JComboBox<>();
+        jLabel3 = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        taHistorico = new javax.swing.JTextArea();
+        btnAtualizarLista = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        tfMensagem = new javax.swing.JTextField();
+        btnEnviar = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        jLabel1.setText("Apelido:");
+
+        btnConectar.setText("Conectar");
+        btnConectar.addActionListener(this::btnConectarActionPerformed);
+
+        btnDesconectar.setText("Desconectar");
+        btnDesconectar.addActionListener(this::btnDesconectarActionPerformed);
+
+        jLabel2.setText("Destinatário:");
+
+        cbDestino.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "TODOS" }));
+
+        jLabel3.setText("Histórico do Chat:");
+
+        taHistorico.setEditable(false);
+        taHistorico.setColumns(20);
+        taHistorico.setRows(5);
+        jScrollPane1.setViewportView(taHistorico);
+
+        btnAtualizarLista.setText("Atualizar Lista");
+        btnAtualizarLista.addActionListener(this::btnAtualizarListaActionPerformed);
+
+        jLabel4.setText("Mensagem:");
+
+        btnEnviar.setText("Enviar");
+        btnEnviar.addActionListener(this::btnEnviarActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel4)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(tfMensagem)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(btnEnviar))
+                            .addComponent(jScrollPane1)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel2)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(cbDestino, 0, 162, Short.MAX_VALUE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel1)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(tfApelido))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel3)
+                                        .addGap(0, 0, Short.MAX_VALUE)))
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(btnConectar)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(btnDesconectar))
+                                    .addComponent(btnAtualizarLista, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                        .addGap(15, 15, 15))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(15, 15, 15)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel1)
+                    .addComponent(tfApelido, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnConectar)
+                    .addComponent(btnDesconectar))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(cbDestino, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnAtualizarLista))
+                .addGap(18, 18, 18)
+                .addComponent(jLabel3)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(tfMensagem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(btnEnviar))
+                .addContainerGap(15, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    private void btnConectarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConectarActionPerformed
+        meuApelido = tfApelido.getText().trim();
+        
+        if (meuApelido.isEmpty()) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Informe um apelido válido!");
+            return;
+        }
+        
+        try {
+            // 1. Abre a conexão TCP com o servidor
+            socket = new java.net.Socket("localhost", 9999);
+            saida = new java.io.PrintWriter(socket.getOutputStream(), true);
+            entrada = new java.io.BufferedReader(new java.io.InputStreamReader(socket.getInputStream()));
+            
+            // 2. Inicia a thread de escuta
+            conectado = true;
+            iniciarThreadEscuta();
+            
+            // 3. Envia o pacote de LOGIN
+            Mensagem msgLogin = new Mensagem("LOGIN", meuApelido, "SERVIDOR", "", null);
+            saida.println(msgLogin.paraLinha());
+            
+        } catch (Exception e) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Erro ao conectar ao servidor: " + e.getMessage());
+            fecharConexaoLocal();
+        }
+    }//GEN-LAST:event_btnConectarActionPerformed
+
+    private void btnEnviarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnviarActionPerformed
+        if (!conectado) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Você precisa se conectar primeiro!");
+            return;
+        }
+        
+        String texto = tfMensagem.getText().trim();
+        String destino = (String) cbDestino.getSelectedItem();
+        
+        if (texto.isEmpty() || destino == null) return;
+        
+        if ("TODOS".equals(destino)) {
+            // Envio Broadcast
+            Mensagem msg = new Mensagem("MSG_TODOS", meuApelido, "TODOS", texto, null);
+            saida.println(msg.paraLinha());
+        } else {
+            // Envio Unicast (Mensagem Privada)
+            Mensagem msg = new Mensagem("MSG_PRIVADA", meuApelido, destino, texto, null);
+            saida.println(msg.paraLinha());
+            // Exibe a mensagem privada enviada na própria tela
+            taHistorico.append("[PRIVADO para " + destino + "]: " + texto + "\n");
+        }
+        
+        tfMensagem.setText("");
+        tfMensagem.requestFocus();
+    }//GEN-LAST:event_btnEnviarActionPerformed
+
+    private void btnAtualizarListaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAtualizarListaActionPerformed
+        if (conectado && saida != null) {
+            Mensagem req = new Mensagem("LISTAR_USUARIOS", meuApelido, "SERVIDOR", "", null);
+            saida.println(req.paraLinha());
+        }
+    }//GEN-LAST:event_btnAtualizarListaActionPerformed
+
+    private void btnDesconectarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDesconectarActionPerformed
+        if (conectado && saida != null) {
+            Mensagem req = new Mensagem("SAIR", meuApelido, "SERVIDOR", "", null);
+            saida.println(req.paraLinha());
+        }
+        fecharConexaoLocal();
+    }//GEN-LAST:event_btnDesconectarActionPerformed
+
+    private void fecharConexaoLocal() {
+        conectado = false;
+        try { if (socket != null) socket.close(); } catch (Exception ignored) {}
+        btnConectar.setEnabled(true);
+        btnDesconectar.setEnabled(false);
+        tfApelido.setEnabled(true);
+    }
+    
+    private void atualizarComboBoxUsuarios(java.util.List<String> usuarios) {
+        if (usuarios == null) return;
+        
+        String selecionado = (String) cbDestino.getSelectedItem();
+        cbDestino.removeAllItems();
+        cbDestino.addItem("TODOS");
+        
+        for (String usu : usuarios) {
+            // Não adiciona o próprio apelido na lista de destino
+            if (!usu.equals(meuApelido)) {
+                cbDestino.addItem(usu);
+            }
+        }
+        
+        if (selecionado != null) {
+            cbDestino.setSelectedItem(selecionado);
+        }
+    }
+    
+    private void iniciarThreadEscuta() {
+        new Thread(() -> {
+            try {
+                String linha;
+                while (conectado && (linha = entrada.readLine()) != null) {
+                    Mensagem msg = Mensagem.fromLinha(linha);
+                    if (msg != null) {
+                        processarMensagemRecebida(msg);
+                    }
+                }
+            } catch (Exception e) {
+                if (conectado) {
+                    taHistorico.append("[SISTEMA] Conexão com o servidor encerrada.\n");
+                }
+            }
+        }).start();
+    }
+    
+    private void processarMensagemRecebida(Mensagem msg) {
+        // Atualiza a lista de usuários sempre que ela vier no pacote JSON
+        if (msg.getListaUsuarios() != null) {
+            atualizarComboBoxUsuarios(msg.getListaUsuarios());
+        }
+        
+        switch (msg.getTipo()) {
+            case "LOGIN":
+                if ("OK".equals(msg.getConteudo())) {
+                    conectado = true;
+                    taHistorico.append("[SISTEMA] Conectado com sucesso ao Chat!\n");
+                    btnConectar.setEnabled(false);
+                    btnDesconectar.setEnabled(true);
+                    tfApelido.setEnabled(false);
+                }
+                break;
+                
+            case "SISTEMA":
+                taHistorico.append("[SISTEMA] " + msg.getConteudo() + "\n");
+                break;
+                
+            case "MSG_TODOS":
+                taHistorico.append("[" + msg.getRemetente() + " para TODOS]: " + msg.getConteudo() + "\n");
+                break;
+                
+            case "MSG_PRIVADA": 
+                taHistorico.append("[PRIVADO de " + msg.getRemetente() + "]: " + msg.getConteudo() + "\n");
+                break;
+                
+            case "ERRO":
+                taHistorico.append("[ERRO] " + msg.getConteudo() + "\n");
+                if (!conectado) {
+                    // Se deu erro no login, fecha a conexão local
+                    fecharConexaoLocal();
+                }
+                break;
+        }
+    }
+    
     /**
      * @param args the command line arguments
      */
@@ -62,5 +317,18 @@ public class TelaChat extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnAtualizarLista;
+    private javax.swing.JButton btnConectar;
+    private javax.swing.JButton btnDesconectar;
+    private javax.swing.JButton btnEnviar;
+    private javax.swing.JComboBox<String> cbDestino;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JTextArea taHistorico;
+    private javax.swing.JTextField tfApelido;
+    private javax.swing.JTextField tfMensagem;
     // End of variables declaration//GEN-END:variables
 }
