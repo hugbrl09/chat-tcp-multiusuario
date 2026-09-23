@@ -9,6 +9,10 @@ public class Mensagem {
     private String destino;
     private String conteudo;
     private List<String> listaUsuarios;
+    
+    //P2P
+    private String nomeArquivo;
+    private int portaP2P;
 
     public Mensagem() {
     }
@@ -19,6 +23,15 @@ public class Mensagem {
         this.destino = destino;
         this.conteudo = conteudo;
         this.listaUsuarios = listaUsuarios;
+    }
+
+    public Mensagem(String tipo, String remetente, String destino, String conteudo, String nomeArquivo, int portaP2P) {
+        this.tipo = tipo;
+        this.remetente = remetente;
+        this.destino = destino;
+        this.conteudo = conteudo;
+        this.nomeArquivo = nomeArquivo;
+        this.portaP2P = portaP2P;
     }
     
     // Serialização (Objeto -> JSON)
@@ -69,5 +82,21 @@ public class Mensagem {
 
     public void setListaUsuarios(List<String> listaUsuarios) {
         this.listaUsuarios = listaUsuarios;
+    }
+
+    public String getNomeArquivo() {
+        return nomeArquivo;
+    }
+
+    public void setNomeArquivo(String nomeArquivo) {
+        this.nomeArquivo = nomeArquivo;
+    }
+
+    public int getPortaP2P() {
+        return portaP2P;
+    }
+
+    public void setPortaP2P(int portaP2P) {
+        this.portaP2P = portaP2P;
     }
 }
