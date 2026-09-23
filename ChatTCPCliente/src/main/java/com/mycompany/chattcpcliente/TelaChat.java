@@ -38,6 +38,7 @@ public class TelaChat extends javax.swing.JFrame {
         jLabel4 = new javax.swing.JLabel();
         tfMensagem = new javax.swing.JTextField();
         btnEnviar = new javax.swing.JButton();
+        btnEnviarArquivo = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -67,6 +68,9 @@ public class TelaChat extends javax.swing.JFrame {
 
         btnEnviar.setText("Enviar");
         btnEnviar.addActionListener(this::btnEnviarActionPerformed);
+
+        btnEnviarArquivo.setText("Enviar Arquivo");
+        btnEnviarArquivo.addActionListener(this::btnEnviarArquivoActionPerformed);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -99,12 +103,14 @@ public class TelaChat extends javax.swing.JFrame {
                                         .addComponent(jLabel3)
                                         .addGap(0, 0, Short.MAX_VALUE)))
                                 .addGap(18, 18, 18)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
                                         .addComponent(btnConectar)
                                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                        .addComponent(btnDesconectar))
-                                    .addComponent(btnAtualizarLista, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                        .addComponent(btnDesconectar)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(btnAtualizarLista, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(btnEnviarArquivo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                         .addGap(15, 15, 15))))
         );
         layout.setVerticalGroup(
@@ -122,7 +128,9 @@ public class TelaChat extends javax.swing.JFrame {
                     .addComponent(cbDestino, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnAtualizarLista))
                 .addGap(18, 18, 18)
-                .addComponent(jLabel3)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(jLabel3)
+                    .addComponent(btnEnviarArquivo))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 112, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -131,7 +139,7 @@ public class TelaChat extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tfMensagem, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(btnEnviar))
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(8, Short.MAX_VALUE))
         );
 
         pack();
@@ -207,6 +215,69 @@ public class TelaChat extends javax.swing.JFrame {
         fecharConexaoLocal();
     }//GEN-LAST:event_btnDesconectarActionPerformed
 
+    private void btnEnviarArquivoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEnviarArquivoActionPerformed
+        if (!conectado) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Você precisa estar conectado ao chat!");
+            return;
+        }
+        
+        String destino = (String) cbDestino.getSelectedItem();
+        if (destino == null || "TODOS".equals(destino)) {
+            javax.swing.JOptionPane.showMessageDialog(this,
+                    "Selecione um usuário específico na lista de Destinatário para enviar um arquivo (não é possível enviar arquivos para TODOS.");
+            return;
+        }
+        
+        // 1. Abre a caixa de diálogo para escolha do arquivo no computador
+        javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+        int res = fileChooser.showOpenDialog(this);
+        
+        if (res == javax.swing.JFileChooser.APPROVE_OPTION) {
+            java.io.File arquivoSelecionado = fileChooser.getSelectedFile();
+            
+            try {
+                // 2. Instancia o Servidor P2P na porta local livre
+                ServidorArquivoP2P servidorP2P = new ServidorArquivoP2P(arquivoSelecionado);
+                
+                // 3. Executa o servidor P2P em uma Thread separada aguardando o download
+                new Thread(servidorP2P).start();
+                
+                // 4. Obtém o IP local e a porta gerada dinamicamente
+                String meuIp = socket.getLocalAddress().getHostAddress();
+                int portaP2P = servidorP2P.getPorta();
+                
+                // 5. Envia a solicitação P2P via servidor de chat para o destinatário
+                Mensagem msgP2P = new Mensagem("SOLICITAR_P2P", meuApelido, destino, meuIp, arquivoSelecionado.getName(), portaP2P);
+                saida.println(msgP2P.paraLinha());
+                
+                taHistorico.append("[P2P] Solicitação de envio do arquivo '" + arquivoSelecionado.getName() + "' enviada para " + destino + "...\n");
+                
+            } catch (Exception e) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Erro ao preparar o envio do arquivo: " + e.getMessage());
+            }
+        }
+    }//GEN-LAST:event_btnEnviarArquivoActionPerformed
+
+    private void receberArquivoP2P(String ip, int porta, java.io.File arquivoDestino, String nomeArquivo) {
+        new Thread(() -> {
+            try (java.net.Socket socketP2P = new java.net.Socket(ip, porta);
+                 java.io.InputStream is = socketP2P.getInputStream();
+                 java.io.FileOutputStream fos = new java.io.FileOutputStream(arquivoDestino)) {
+                
+                byte[] buffer = new byte[4096];
+                int bytesLidos;
+                
+                while ((bytesLidos = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesLidos);
+                }
+                fos.flush();
+                taHistorico.append("[P2P] Download do arquivo '" + nomeArquivo + "' concluído com sucesso!\n");
+            } catch (Exception e) {
+                taHistorico.append("[P2P] Erro ao baixar o arquivo: " + e.getMessage() + "\n");
+            }
+        }).start();
+    }
+    
     private void fecharConexaoLocal() {
         conectado = false;
         try { if (socket != null) socket.close(); } catch (Exception ignored) {}
@@ -282,6 +353,40 @@ public class TelaChat extends javax.swing.JFrame {
                 taHistorico.append("[PRIVADO de " + msg.getRemetente() + "]: " + msg.getConteudo() + "\n");
                 break;
                 
+            case "SOLICITAR_P2P":
+                int opcao = javax.swing.JOptionPane.showConfirmDialog(
+                        this,
+                        "O usuário '" + msg.getRemetente() + "' deseja lhe enviar o arquivo:\n" +
+                        "'" + msg.getNomeArquivo() + "'\n\nDeseja aceitar o recebimento?",
+                        "Solicitação de Arquivo P2P",
+                        javax.swing.JOptionPane.YES_NO_OPTION
+                );
+                
+                if (opcao == javax.swing.JOptionPane.YES_OPTION) {
+                    // Abre a janela para escolher onde salvar o arquivo baixado
+                    javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+                    fileChooser.setSelectedFile(new java.io.File(msg.getNomeArquivo()));
+                    int res = fileChooser.showSaveDialog(this);
+                    
+                    if (res == javax.swing.JFileChooser.APPROVE_OPTION) {
+                        java.io.File arquivoSalvar = fileChooser.getSelectedFile();
+                        String ipRemetente = msg.getConteudo();
+                        int portaP2P = msg.getPortaP2P();
+                        
+                        taHistorico.append("[P2P] Iniciando download de '" + msg.getNomeArquivo() + "'...\n");
+                        receberArquivoP2P(ipRemetente, portaP2P, arquivoSalvar, msg.getNomeArquivo());
+                    }
+                } else {
+                    // Notifica o remetente sobre a recusa
+                    Mensagem rec = new Mensagem("RECUSAR_P2P", meuApelido, msg.getRemetente(), "", null);
+                    saida.println(rec.paraLinha());
+                }
+                break;
+                
+            case "RECUSAR_P2P":
+                taHistorico.append("[P2P] O usuário '" + msg.getRemetente() + "' recusou o recebimento do arquivo.\n");
+                break;
+                
             case "ERRO":
                 taHistorico.append("[ERRO] " + msg.getConteudo() + "\n");
                 if (!conectado) {
@@ -322,6 +427,7 @@ public class TelaChat extends javax.swing.JFrame {
     private javax.swing.JButton btnConectar;
     private javax.swing.JButton btnDesconectar;
     private javax.swing.JButton btnEnviar;
+    private javax.swing.JButton btnEnviarArquivo;
     private javax.swing.JComboBox<String> cbDestino;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
