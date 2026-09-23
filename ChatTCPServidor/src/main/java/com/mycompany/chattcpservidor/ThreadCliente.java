@@ -84,6 +84,8 @@ public class ThreadCliente implements Runnable {
                 break;
                 
             case "MSG_PRIVADA":
+            case "SOLICITAR_P2P":
+            case "RECUSAR_P2P":
                 boolean entregue = gerenciador.enviarUnicast(msg.getDestino(), msg);
                 if (!entregue) {
                     Mensagem erroDest = new Mensagem("ERRO", "SERVIDOR", apelido,
